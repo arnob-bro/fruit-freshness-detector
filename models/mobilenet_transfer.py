@@ -26,7 +26,8 @@ class MobileNetTransfer(nn.Module):
         super(MobileNetTransfer, self).__init__()
         
         # Load pre-trained MobileNetV2
-        self.backbone = models.mobilenet_v2(pretrained=pretrained)
+        weights = models.MobileNet_V2_Weights.DEFAULT if pretrained else None
+        self.backbone = models.mobilenet_v2(weights=weights)
         
         # Freeze backbone parameters if specified
         if freeze_backbone:

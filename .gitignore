@@ -38,7 +38,15 @@ data/processed/*
 data/train/*
 data/val/*
 data/test/*
+data/apple/
+data/banana/
+data/strawberry/
 !data/.gitkeep
+
+# YOLO dataset and runs
+data_yolo/
+runs/
+detection/*.pt
 
 # Models
 models/saved/*
