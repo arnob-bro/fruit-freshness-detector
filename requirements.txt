@@ -1,7 +1,9 @@
 # Core Deep Learning Libraries
 torch>=2.0.0
 torchvision>=0.15.0
-tensorflow>=2.13.0
+
+# Object Detection (YOLOv8)
+ultralytics>=8.0.0
 
 # Computer Vision
 opencv-python>=4.8.0

@@ -25,7 +25,8 @@ class ResNetTransfer(nn.Module):
         super(ResNetTransfer, self).__init__()
         
         # Load pre-trained ResNet50
-        self.backbone = models.resnet50(pretrained=pretrained)
+        weights = models.ResNet50_Weights.DEFAULT if pretrained else None
+        self.backbone = models.resnet50(weights=weights)
         
         # Freeze backbone parameters if specified
         if freeze_backbone:

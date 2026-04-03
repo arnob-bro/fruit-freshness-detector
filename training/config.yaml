@@ -1,19 +1,34 @@
-# Training Configuration File
+# Training Configuration for Fruit Freshness Detection
+# 2-Stage Pipeline: YOLOv8 detection + per-fruit freshness CNNs
 
 data:
-  data_dir: "data"
-  
+  data_dir: "data"  # Contains: apple/, banana/, strawberry/ each with train/val/test
+
+fruits:
+  - apple
+  - banana
+  - strawberry
+
+# 5 CNN architectures to train per fruit (15 models total)
+architectures:
+  - mobilenet
+  - resnet
+  - efficientnet
+  - vgg
+  - densenet
+
 model:
-  type: "resnet"  # Options: "cnn", "resnet", "mobilenet"
   pretrained: true
   freeze_backbone: true
 
 training:
-  batch_size: 32
-  num_epochs: 30
+  batch_size: 16
+  num_epochs: 20
+  fine_tune_epochs: 10
   learning_rate: 0.0001
-  optimizer: "adam"  # Options: "adam", "sgd"
-  scheduler: "plateau"  # Options: "plateau", "step", null
+  fine_tune_lr: 0.00001
+  optimizer: "adam"
+  scheduler: "plateau"
   weight_decay: 0.0001
   num_workers: 4
   save_dir: "models/saved"
@@ -21,6 +36,3 @@ training:
 evaluation:
   threshold: 0.5
   metrics: ["accuracy", "precision", "recall", "f1_score", "roc_auc"]
-
-
-

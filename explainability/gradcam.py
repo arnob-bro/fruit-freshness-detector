@@ -15,8 +15,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-from models.resnet_transfer import get_model as get_resnet_model
-from models.mobilenet_transfer import get_model as get_mobilenet_model
+from models import get_model_by_name
 
 
 class GradCAM:
@@ -119,6 +118,22 @@ class GradCAM:
         return overlayed
 
 
+def _get_target_layer(model, model_type):
+    """Get the appropriate target layer for GradCAM based on architecture."""
+    if model_type == 'resnet':
+        return model.backbone.layer4[-1]
+    elif model_type == 'mobilenet':
+        return model.backbone.features[-1]
+    elif model_type == 'efficientnet':
+        return model.backbone.features[-1]
+    elif model_type == 'vgg':
+        return model.backbone.features[-1]
+    elif model_type == 'densenet':
+        return model.backbone.features.denseblock4
+    else:
+        raise ValueError(f"Unknown model type: {model_type}")
+
+
 def visualize_gradcam(model, image_path, model_type='resnet', save_path=None):
     """
     Visualize GradCAM for a given image
@@ -143,18 +158,13 @@ def visualize_gradcam(model, image_path, model_type='resnet', save_path=None):
     model = model.to(device)
     input_tensor = input_tensor.to(device)
     
-    # Get target layer
-    if model_type == 'resnet':
-        target_layer = model.backbone.layer4[-1]
-    elif model_type == 'mobilenet':
-        target_layer = model.backbone.features[-1]
-    else:
-        raise ValueError(f"Unknown model type: {model_type}")
-    
+    # Get target layer based on architecture
+    target_layer = _get_target_layer(model, model_type)
+
     # Generate CAM
     gradcam = GradCAM(model, target_layer)
     cam = gradcam.generate_cam(input_tensor)
-    
+
     # Visualize
     fig, axes = plt.subplots(1, 3, figsize=(15, 5))
     
@@ -219,18 +229,13 @@ def explain_prediction(model, image_path, model_type='resnet', threshold=0.5):
         proba = torch.sigmoid(output).item() if output.dim() == 1 else output.item()
         prediction = 'Fresh' if proba > threshold else 'Rotten'
     
-    # Get target layer
-    if model_type == 'resnet':
-        target_layer = model.backbone.layer4[-1]
-    elif model_type == 'mobilenet':
-        target_layer = model.backbone.features[-1]
-    else:
-        raise ValueError(f"Unknown model type: {model_type}")
-    
+    # Get target layer based on architecture
+    target_layer = _get_target_layer(model, model_type)
+
     # Generate CAM
     gradcam = GradCAM(model, target_layer)
     cam = gradcam.generate_cam(input_tensor)
-    
+
     return {
         'prediction': prediction,
         'confidence': proba if prediction == 'Fresh' else 1 - proba,
@@ -248,19 +253,14 @@ if __name__ == '__main__':
     parser.add_argument('--image', type=str, required=True,
                         help='Path to input image')
     parser.add_argument('--model_type', type=str, default='resnet',
-                        choices=['resnet', 'mobilenet'],
+                        choices=['resnet', 'mobilenet', 'efficientnet', 'vgg', 'densenet'],
                         help='Type of model')
     parser.add_argument('--save_path', type=str, default='gradcam_visualization.png',
                         help='Path to save visualization')
-    
+
     args = parser.parse_args()
-    
-    # Load model
-    if args.model_type == 'resnet':
-        model = get_resnet_model(num_classes=1)
-    else:
-        model = get_mobilenet_model(num_classes=1)
-    
+
+    model = get_model_by_name(args.model_type, num_classes=1, pretrained=False, freeze_backbone=False)
     checkpoint = torch.load(args.model, map_location='cpu')
     model.load_state_dict(checkpoint['model_state_dict'])
     
